@@ -10,7 +10,7 @@
     const myVal = import.meta.env.VITE_MY_TOKEN;
 
     let stations = [];
-    let map;
+    let map, trips, filteredTrips;
     let mapViewChanged = 0;
     let timeFilter = -1;
 
@@ -27,12 +27,26 @@
 
     $: map?.on("move", evt => mapViewChanged++);
 
+    function minutesSinceMidnight (date) {
+        return date.getHours() * 60 + date.getMinutes();
+    }
+
+    $: filteredStations = stations.filter (station => {
+        station = {...station};
+        
+    })
+
+    $: filteredTrips = timeFilter === -1? trips : trips.filter(trip => {
+        let startedMinutes = minutesSinceMidnight(trip.started_at);
+        let endedMinutes = minutesSinceMidnight(trip.ended_at);
+        return Math.abs(startedMinutes - timeFilter) <= 60
+            || Math.abs(endedMinutes - timeFilter) <= 60;
+    });
 
     onMount (async () => {
         stations = await d3.csv("https://vis-society.github.io/labs/8/data/bluebikes-stations.csv", station => ({
           ...station
         }));
-        console.log(stations)
 
         map = new mapboxgl.Map({
             /* options */
@@ -54,6 +68,14 @@
         paint: {
             // paint params, e.g. colors, thickness, etc.
         },
+        });
+
+        trips = await d3.csv("https://vis-society.github.io/labs/8/data/bluebikes-traffic-2024-03.csv").then(trips => {
+        for (let trip of trips) {
+            trip.started_at = new Date(trip.started_at);
+            trip.ended_at = new Date(trip.ended_at);
+        }
+            return trips;
         });
 
 
