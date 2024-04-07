@@ -21,7 +21,6 @@
 </script>
 
 <h1>Boston Bike System</h1>
-<h1>{myVal}</h1>
 <div id="map"/>
 
 <style>
