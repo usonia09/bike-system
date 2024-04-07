@@ -9,13 +9,32 @@
     mapboxgl.accessToken = import.meta.env.VITE_MY_TOKEN;
     const myVal = import.meta.env.VITE_MY_TOKEN;
 
-    onMount (async () => {
-        let stations = await d3.csv("https://vis-society.github.io/labs/8/data/bluebikes-stations.csv", station => ({
-            lat: Number(station.Lat), 
-            long: Number(station.Long),
-        }));
+    let stations = [];
+    let map;
+    let mapViewChanged = 0;
+    let timeFilter = -1;
 
-        let map = new mapboxgl.Map({
+    $: timeFilterLabel = new Date(0, 0, 0, 0, timeFilter)
+                     .toLocaleString("en", {timeStyle: "short"});
+
+
+
+    function getCoords (station) {
+        let point = new mapboxgl.LngLat(+station.Long, +station.Lat);
+        let {x, y} = map.project(point);
+        return {cx: x, cy: y};
+    }
+
+    $: map?.on("move", evt => mapViewChanged++);
+
+
+    onMount (async () => {
+        stations = await d3.csv("https://vis-society.github.io/labs/8/data/bluebikes-stations.csv", station => ({
+          ...station
+        }));
+        console.log(stations)
+
+        map = new mapboxgl.Map({
             /* options */
             container: "map",
             style: "mapbox://styles/mapbox/streets-v12",
@@ -41,11 +60,31 @@
    })
 
 
+
 </script>
 
 <h1>Boston Bike System</h1>
+
+<header>
+    <label for="slider">Filter by time: </label>
+    <input type="range" id="slider" bind:value={timeFilter} min="-1" max="1440">
+
+    {#if timeFilter==-1}
+        <em  id="time">(any time)</em>
+    {:else}
+        <time id="time">{timeFilterLabel}</time>
+    {/if}
+</header>
+
 <div id="map">
-	<svg></svg>
+	<svg>
+        {#key mapViewChanged}
+        <!-- render stations here -->
+            {#each stations as station }
+            <circle { ...getCoords(station) } r="5" fill="steelblue" />
+            {/each}
+        {/key}
+    </svg>
 </div>
 
 
@@ -61,7 +100,20 @@
     width: 100%;
     height: 100%;
     pointer-events: none;
-}
+    }
+
+    header {
+        display: flex;
+        gap: 1em;
+        align-items: baseline;
+        margin-left: auto;
+        display: block;
+    }
+
+    #time{
+        display: block;
+
+    }
 
 
 
