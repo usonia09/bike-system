@@ -16,6 +16,9 @@
     let maxRadius = 25;
     let mapViewChanged = 0;
     let timeFilter = -1;
+    let departuresByMinute = Array.from({length: 1440}, () => []);
+    let arrivalsByMinute = Array.from({length: 1440}, () => []);
+
 
     $: radiusScale = d3.scaleSqrt()
 	.domain([0, d3.max(stations, d => d.totalTraffic)])
@@ -39,14 +42,15 @@
         return date.getHours() * 60 + date.getMinutes();
     }
 
-    $: filteredTrips = timeFilter === -1? trips : trips.filter(trip => {
-        let startedMinutes = minutesSinceMidnight(trip.started_at);
-        let endedMinutes = minutesSinceMidnight(trip.ended_at);
-        return Math.abs(startedMinutes - timeFilter) <= 60
-            || Math.abs(endedMinutes - timeFilter) <= 60;
-    });
-    $: filteredArrivals = timeFilter === -1? arrivals :d3.rollup(filteredTrips, v => v.length, d => d.start_station_id);
-    $: filteredDepartures = timeFilter === -1? departures :d3.rollup(filteredTrips, v => v.length, d => d.end_station_id);
+    // $: filteredTrips = timeFilter === -1? trips : trips.filter(trip => {
+    //     let startedMinutes = minutesSinceMidnight(trip.started_at);
+    //     let endedMinutes = minutesSinceMidnight(trip.ended_at);
+    //     return Math.abs(startedMinutes - timeFilter) <= 60
+    //         || Math.abs(endedMinutes - timeFilter) <= 60;
+    // });
+
+    $: filteredArrivals = timeFilter === -1? arrivals :d3.rollup(departuresByMinute.slice(timeFilter - 60, timeFilter + 60).flat(), v => v.length, d => d.start_station_id);
+    $: filteredDepartures = timeFilter === -1? departures :d3.rollup(arrivalsByMinute.slice(timeFilter - 60, timeFilter + 60).flat(), v => v.length, d => d.end_station_id);
 
     $: filteredStations = timeFilter === -1? stations : stations.map (station => {
         station = {...station};
@@ -110,6 +114,10 @@
         for (let trip of trips) {
             trip.started_at = new Date(trip.started_at);
             trip.ended_at = new Date(trip.ended_at);
+            let startedMinutes = minutesSinceMidnight(trip.started_at);
+            departuresByMinute[startedMinutes].push(trip);
+            let endedMinutes = minutesSinceMidnight(trip.ended_at);
+            arrivalsByMinute[endedMinutes].push(trip)
         }
             return trips;
         });
