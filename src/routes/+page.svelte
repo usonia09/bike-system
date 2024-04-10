@@ -61,12 +61,33 @@
             data: "https://bostonopendata-boston.opendata.arcgis.com/datasets/boston::existing-bike-network-2022.geojson?outSR=%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D",
         });
 
+
+        map.addSource("cambridge_route", {
+            type: "geojson",
+            data: "https://raw.githubusercontent.com/cambridgegis/cambridgegis_data/main/Recreation/Bike_Facilities/RECREATION_BikeFacilities.geojson",
+        });
+
         map.addLayer({
         id: "layer1", // A name for our layer (up to you)
         type: "line", // one of the supported layer types, e.g. line, circle, etc.
         source: "boston_route", // The id we specified in `addSource()`
         paint: {
             // paint params, e.g. colors, thickness, etc.
+            "line-color": "#DE75F3",
+            "line-width": 3,
+            "line-opacity":0.4
+        },
+        });
+
+        map.addLayer({
+        id: "layer2", // A name for our layer (up to you)
+        type: "line", // one of the supported layer types, e.g. line, circle, etc.
+        source: "cambridge_route", // The id we specified in `addSource()`
+        paint: {
+            // paint params, e.g. colors, thickness, etc.
+            "line-color": "#DE75F3",
+            "line-width": 3,
+            "line-opacity":0.4
         },
         });
 
