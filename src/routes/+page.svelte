@@ -42,6 +42,23 @@
         return date.getHours() * 60 + date.getMinutes();
     }
 
+    function filterByMinute (tripsByMinute, minute) {
+	// Normalize both to the [0, 1439] range
+	// % is the remainder operator: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Remainder
+	let minMinute = (minute - 60 + 1440) % 1440;
+	let maxMinute = minute + 60 % 1440;
+
+	if (minMinute > maxMinute) {
+		let beforeMidnight = tripsByMinute.slice(minMinute);
+		let afterMidnight = tripsByMinute.slice(0, maxMinute);
+		return beforeMidnight.concat(afterMidnight).flat();
+	}
+	else {
+		return tripsByMinute.slice(minMinute, maxMinute).flat();
+	}
+}
+
+
     // $: filteredTrips = timeFilter === -1? trips : trips.filter(trip => {
     //     let startedMinutes = minutesSinceMidnight(trip.started_at);
     //     let endedMinutes = minutesSinceMidnight(trip.ended_at);
@@ -49,8 +66,8 @@
     //         || Math.abs(endedMinutes - timeFilter) <= 60;
     // });
 
-    $: filteredArrivals = timeFilter === -1? arrivals :d3.rollup(departuresByMinute.slice(timeFilter - 60, timeFilter + 60).flat(), v => v.length, d => d.start_station_id);
-    $: filteredDepartures = timeFilter === -1? departures :d3.rollup(arrivalsByMinute.slice(timeFilter - 60, timeFilter + 60).flat(), v => v.length, d => d.end_station_id);
+    $: filteredArrivals = timeFilter === -1? arrivals :d3.rollup(filterByMinute(arrivalsByMinute, timeFilter), v => v.length, d => d.start_station_id);
+    $: filteredDepartures = timeFilter === -1? departures :d3.rollup(filterByMinute(departuresByMinute, timeFilter), v => v.length, d => d.end_station_id);
 
     $: filteredStations = timeFilter === -1? stations : stations.map (station => {
         station = {...station};
