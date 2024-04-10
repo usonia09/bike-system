@@ -194,12 +194,28 @@
         {/key}
     </svg>
 </div>
+<div class="legend">
+	<div style="--departure-ratio: 1; text-align: start">More departures</div>
+	<div style="--departure-ratio: 0.5; text-align: center">Balanced</div>
+	<div style="--departure-ratio: 0; text-align: end">More arrivals</div>
+</div>
+
 
 
 <style>
     @import url("$lib/global.css");
     #map {
 	flex: 1;
+    }
+
+    div {
+        --color-departures: steelblue;
+        --color-arrivals: darkorange;
+        --color: color-mix(
+            in oklch,
+            var(--color-departures) calc(100% * var(--departure-ratio)),
+            var(--color-arrivals)
+        );
     }
 
     #map svg {
@@ -234,7 +250,21 @@
         display: block;
 
     }
+    
+    .legend {
+        display: flex;
+        gap: 1px;
+        margin-block: 1em;
+    }
 
+    .legend div {
+        flex: 1;
+        background-color: var(--color);
+        gap: 1px;
+        font-weight: bold;
+        color: white;
+        padding: 10px;
+    }
 
 
 </style>
