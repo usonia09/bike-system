@@ -25,6 +25,10 @@
 	.range([0, 25]);
 
 
+    let stationFlow = d3.scaleQuantize()
+	.domain([0, 1])
+	.range([0, 0.5, 1]);
+
     $: timeFilterLabel = new Date(0, 0, 0, 0, timeFilter)
                      .toLocaleString("en", {timeStyle: "short"});
 
@@ -182,7 +186,7 @@
         {#key mapViewChanged}
         <!-- render stations here -->
             {#each filteredStations as station }
-            <circle { ...getCoords(station) } r="{radiusScale(station.totalTraffic)}" fill="steelblue" fill-opacity="50%" stroke="white" pointer-events="auto">
+            <circle { ...getCoords(station) } r="{radiusScale(station.totalTraffic)}" fill-opacity="50%" stroke="white" pointer-events="auto" style="--departure-ratio: { stationFlow(station.departures / station.totalTraffic) }">
                  <title>{station.totalTraffic} trips ({station.departures} departures, { station.arrivals} arrivals)</title>
             </circle>
                 
@@ -212,6 +216,18 @@
         align-items: baseline;
         margin-left: auto;
         display: block;
+    }
+
+    #map svg circle {
+        --color-departures: steelblue;
+        --color-arrivals: darkorange;
+        --color: color-mix(
+            in oklch,
+            var(--color-departures) calc(100% * var(--departure-ratio)),
+            var(--color-arrivals)
+        );
+        fill: var(--color);
+
     }
 
     #time{
