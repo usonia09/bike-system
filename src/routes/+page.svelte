@@ -6,8 +6,7 @@
 
 
 
-    mapboxgl.accessToken = import.meta.env.VITE_MY_TOKEN;
-    const myVal = "pk.eyJ1IjoidXNvbmlhIiwiYSI6ImNsdW9xMnZlYjBpZmkya3BiODN4aHJmaDEifQ.7_EpwmnX-wcM1QNdRvujJg";
+    mapboxgl.accessToken = "pk.eyJ1IjoidXNvbmlhIiwiYSI6ImNsdW9xMnZlYjBpZmkya3BiODN4aHJmaDEifQ.7_EpwmnX-wcM1QNdRvujJg";
 
     let stations = [];
     let filteredTrips = [];
