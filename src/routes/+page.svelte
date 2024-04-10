@@ -10,7 +10,8 @@
     const myVal = import.meta.env.VITE_MY_TOKEN;
 
     let stations = [];
-    let map, trips, filteredTrips, departures, arrivals;
+    let filteredTrips = [];
+    let map, trips, departures, arrivals, filteredArrivals, filteredDepartures, filteredStations;
     let minRadius = 0;
     let maxRadius = 25;
     let mapViewChanged = 0;
@@ -38,17 +39,24 @@
         return date.getHours() * 60 + date.getMinutes();
     }
 
-    $: filteredStations = stations.filter (station => {
-        station = {...station};
-        
-    })
-
     $: filteredTrips = timeFilter === -1? trips : trips.filter(trip => {
         let startedMinutes = minutesSinceMidnight(trip.started_at);
         let endedMinutes = minutesSinceMidnight(trip.ended_at);
         return Math.abs(startedMinutes - timeFilter) <= 60
             || Math.abs(endedMinutes - timeFilter) <= 60;
     });
+    $: filteredArrivals = timeFilter === -1? arrivals :d3.rollup(filteredTrips, v => v.length, d => d.start_station_id);
+    $: filteredDepartures = timeFilter === -1? departures :d3.rollup(filteredTrips, v => v.length, d => d.end_station_id);
+
+    $: filteredStations = timeFilter === -1? stations : stations.map (station => {
+        station = {...station};
+        let id = station.Number;
+        station.arrivals = filteredArrivals.get(id) ?? 0;
+        station.departures = filteredDepartures.get(id) ?? 0;
+        station.totalTraffic = station.arrivals + station.departures
+        return station;
+    
+    })
 
     onMount (async () => {
         stations = await d3.csv("https://vis-society.github.io/labs/8/data/bluebikes-stations.csv", station => ({
@@ -148,7 +156,7 @@
 	<svg>
         {#key mapViewChanged}
         <!-- render stations here -->
-            {#each stations as station }
+            {#each filteredStations as station }
             <circle { ...getCoords(station) } r="{radiusScale(station.totalTraffic)}" fill="steelblue" fill-opacity="50%" stroke="white" pointer-events="auto">
                  <title>{station.totalTraffic} trips ({station.departures} departures, { station.arrivals} arrivals)</title>
             </circle>
