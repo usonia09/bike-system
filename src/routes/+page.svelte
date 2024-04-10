@@ -10,9 +10,16 @@
     const myVal = import.meta.env.VITE_MY_TOKEN;
 
     let stations = [];
-    let map, trips, filteredTrips;
+    let map, trips, filteredTrips, departures, arrivals;
+    let minRadius = 0;
+    let maxRadius = 25;
     let mapViewChanged = 0;
     let timeFilter = -1;
+
+    $: radiusScale = d3.scaleSqrt()
+	.domain([0, d3.max(stations, d => d.totalTraffic)])
+	.range([0, 25]);
+
 
     $: timeFilterLabel = new Date(0, 0, 0, 0, timeFilter)
                      .toLocaleString("en", {timeStyle: "short"});
@@ -99,6 +106,24 @@
             return trips;
         });
 
+        departures = d3.rollup(trips, v => v.length, d => d.start_station_id);
+        arrivals = d3.rollup(trips, v => v.length, d => d.end_station_id);
+
+        stations = stations.map(station => {
+            let id = station.Number;
+            station.arrivals = arrivals.get(id) ?? 0;
+            station.departures = departures.get(id) ?? 0;
+            station.totalTraffic = station.arrivals + station.departures
+            return station;
+        });
+
+        trips = trips.map(trip => {
+            let id = trip.Number;
+            trip.arrivals = arrivals.get(id) ?? 0;
+            trip.departures = departures.get(id) ?? 0;
+            trip.totalTraffic = trip.arrivals + trip.departures
+            return trip;
+        });
 
    })
 
@@ -124,7 +149,10 @@
         {#key mapViewChanged}
         <!-- render stations here -->
             {#each stations as station }
-            <circle { ...getCoords(station) } r="5" fill="steelblue" />
+            <circle { ...getCoords(station) } r="{radiusScale(station.totalTraffic)}" fill="steelblue" fill-opacity="50%" stroke="white" pointer-events="auto">
+                 <title>{station.totalTraffic} trips ({station.departures} departures, { station.arrivals} arrivals)</title>
+            </circle>
+                
             {/each}
         {/key}
     </svg>
